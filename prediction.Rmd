@@ -1,0 +1,109 @@
+---
+title: "coursera 8"
+author: "Muskaan"
+date: "21/11/2020"
+output:
+  html_document: default
+  pdf_document: default
+---
+TITLE: Prediction Assignment by Muskaan Parmar
+
+SUMMARY: The goal of this assignment is to use the data of 6 participants obtained from accelerometers on the belt, forearm, arm, and dumbell and predict the manner in which they exercise. They were asked to perform barbell lifts correctly and incorrectly in 5 different ways. Since, people regularly quantify how much of a particular activity they do, but they rarely quantify how well they do it which would be dealt in this assignment. We will build a model, use cross validation and thus make choices. Also, we will use the model on 20 different test cases.
+
+1. Setting the directory and loading the data
+```{r , echo=TRUE}
+setwd("~/R/Coursera 8")
+library(randomForest)
+library(lattice)
+library(ggplot2)
+library(doParallel)
+library(rpart)
+library(caret)   
+library(rpart.plot)
+set.seed(127)
+train <- read.csv("pml-training.csv", na.strings=c("NA","","#DIV/0!"))
+test <- read.csv("pml-testing.csv", na.strings=c("NA", "", "#DIV/0!"))
+#loading data and removing NA,#DIV/0! and blank values from data
+#head(train)
+print("After removing NA,#DIV/0! and blank values from the two datasets:")
+print("Dimension of training data=")
+dim(train)
+print("Dimension of testing data=")
+dim(test)
+```
+
+2.Data pre-processing
+```{r , echo=TRUE}
+train2<-train[,-c(1:7)]
+test2 <-test[,-c(1:7)]
+#removing index, timestamp, new window, num window and subject name i.e. first 7 columns
+print("After removing non predictors from the two datasets:")
+print("Dimension of training data=")
+dim(train2)
+print("Dimension of testing data=")
+dim(test2)
+#checking for non zero values in training dataset
+train3<-nzv(train2[,-ncol(train2)],saveMetrics=TRUE)
+rownames(train3)
+```
+
+3.Partitioning train data into validation(testing) set and training set
+```{r , echo=TRUE}
+intr<- createDataPartition(train2$classe, p = 0.6, list = FALSE)
+training<- train2[intr,]#training set(60%)
+validation<- train2[-intr,]#validation set(40%)
+print("After partitioning training data into validation set(40%) and training set(60%) :")
+print("Dimension of training set=")
+dim(training)
+print("Dimension of validation set=")
+dim(validation)
+```
+
+4.Model building by cross validation using Random Forest algorithm
+```{r , echo=TRUE}
+
+mfn <- "myModel.RData"
+if (!file.exists(mfn)) 
+{
+  nc <- makeCluster(detectCores() - 1)
+  registerDoParallel(cores=nc)
+  getDoParWorkers() # 3    
+  
+  myModel  <- train(classe ~ ., data = training, method = "rf", metric = "Accuracy",         preProcess=c("center", "scale"), trControl=trainControl(method = "cv", number = 4, p= 0.60, allowParallel = TRUE ) 
+  )
+  save(myModel , file = "myModel.RData")
+  stopCluster(nc)
+}else 
+{
+  load(file = mfn, verbose = TRUE)
+}
+print(myModel, digits=4)
+```
+
+5.Prediction
+```{r , echo=TRUE}
+predTest <- predict(myModel, newdata=validation)
+```
+
+6.Confusion Matrix
+```{r , echo=TRUE}
+
+confusionMatrix(predTest, factor(validation$classe))
+```
+
+7.Complete data about the model
+```{r , echo=TRUE}
+myModel$finalModel
+varImp(myModel)
+```
+
+8. Quiz Coursera
+The testing is now performed on the Quiz set.
+```{r , echo=TRUE}
+print(predict(myModel, newdata=test2))
+```
+The above sequence is the set of answers obtained for the Quiz.
+
+
+CITATIONS: The data for this project comes from : http://web.archive.org/web/20161224072740/http:/groupware.les.inf.puc-rio.br/har
+
