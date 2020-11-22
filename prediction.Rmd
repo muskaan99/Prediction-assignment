@@ -2,9 +2,7 @@
 title: "coursera 8"
 author: "Muskaan"
 date: "21/11/2020"
-output:
-  html_document: default
-  pdf_document: default
+output: md_document
 ---
 TITLE: Prediction Assignment by Muskaan Parmar
 
@@ -20,7 +18,7 @@ library(doParallel)
 library(rpart)
 library(caret)   
 library(rpart.plot)
-set.seed(127)
+
 train <- read.csv("pml-training.csv", na.strings=c("NA","","#DIV/0!"))
 test <- read.csv("pml-testing.csv", na.strings=c("NA", "", "#DIV/0!"))
 #loading data and removing NA,#DIV/0! and blank values from data
@@ -44,7 +42,7 @@ print("Dimension of testing data=")
 dim(test2)
 #checking for non zero values in training dataset
 train3<-nzv(train2[,-ncol(train2)],saveMetrics=TRUE)
-rownames(train3)
+#row(train3)
 ```
 
 3.Partitioning train data into validation(testing) set and training set
@@ -90,6 +88,9 @@ predTest <- predict(myModel, newdata=validation)
 
 confusionMatrix(predTest, factor(validation$classe))
 ```
+The out of sample error is 0.0037.
+The accuracy is 0.9964 and lies within the 95% confidence interval.
+
 
 7.Complete data about the model
 ```{r , echo=TRUE}
